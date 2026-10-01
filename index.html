@@ -66,10 +66,10 @@
     <header class="sticky top-0 z-20 bg-afmc-red text-white shadow-sm px-4 py-3 pt-safe">
         <div class="max-w-md mx-auto flex items-center justify-between">
             <div class="flex items-center space-x-3">
-                <!-- 커스텀 PNG 이미지 로고 (./logo.png) -->
-
-                    <img src="./logo.png" alt="로고" class="w-full h-full object-cover" onerror="this.onerror=null; this.src='https://placehold.co/80x80/7C1D24/FFFFFF?text=AFMC';">
-       
+                <!-- 커스텀 PNG 이미지 로고 (./logo.png) - 테두리와 네모 배경 제거 -->
+                <div class="w-10 h-10 flex items-center justify-center shrink-0">
+                    <img src="./logo.png" alt="로고" class="w-full h-full object-contain" onerror="this.onerror=null; this.src='https://placehold.co/80x80/7C1D24/FFFFFF?text=AFMC';">
+                </div>
                 <div>
                     <h1 class="text-base font-bold text-white leading-tight flex items-center gap-1.5">
                         영현병 증식비
@@ -692,7 +692,7 @@
                     <h1 style="text-align: center; color: #7C1D24; margin-bottom: 4px; font-size: 20px; font-weight: 700;">영현병 증식비 집행 정산서</h1>
                     <div style="text-align: center; color: #64748b; font-size: 12px; margin-bottom: 16px;">국군의무사령부 (AFMC) | 작성일: ${today}</div>
                     
-                    <div style="display: flex; justify-content: space-between; background: #f8fafc; border: 1px solid #e2e8f0; padding: 10px 16px; border-radius: 8px; margin-bottom: 16px; font-size: 12px;">
+                    <div style="display: flex; justify-between; background: #f8fafc; border: 1px solid #e2e8f0; padding: 10px 16px; border-radius: 8px; margin-bottom: 16px; font-size: 12px;">
                         <div><strong>배정 예산:</strong> ${budget.toLocaleString('ko-KR')}원</div>
                         <div><strong>현재 집행액:</strong> ${totalSpent.toLocaleString('ko-KR')}원</div>
                         <div><strong>남은 잔액:</strong> ${remaining.toLocaleString('ko-KR')}원</div>
