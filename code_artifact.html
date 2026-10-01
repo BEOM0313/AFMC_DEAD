@@ -1,0 +1,768 @@
+<!DOCTYPE html>
+<html lang="ko" class="h-full bg-slate-100">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>영현병 증식비 계산기</title>
+
+    <!-- iOS Web App (PWA) Meta Tags -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="영현병 증식비">
+    <meta name="theme-color" content="#7C1D24">
+    <link rel="manifest" href='data:application/manifest+json,{"name":"영현병 증식비 계산기","short_name":"영현병 증식비","start_url":".","display":"standalone","background_color":"#F1F5F9","theme_color":"#7C1D24"}'>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts (Noto Sans KR) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700;900&display=swap" rel="stylesheet">
+    <!-- html2pdf.js for Direct PDF Downloads -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['"Noto Sans KR"', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
+                    },
+                    colors: {
+                        afmc: {
+                            red: '#7C1D24',        // 정갈한 단색 버건디
+                            redDark: '#501116',    // 다크 버건디
+                            redLight: '#FDF2F2',
+                            slateBg: '#F8FAFC',    // 담백한 배경색
+                            cardBg: '#FFFFFF'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Noto Sans KR', -apple-system, BlinkMacSystemFont, sans-serif;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+            background-color: #F1F5F9;
+            color: #0F172A;
+            padding-top: env(safe-area-inset-top);
+            padding-bottom: env(safe-area-inset-bottom);
+        }
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+</head>
+<body class="h-full text-slate-800 flex flex-col justify-between select-none">
+
+    <!-- Header -->
+    <header class="sticky top-0 z-20 bg-afmc-red text-white shadow-sm px-4 py-3 pt-safe">
+        <div class="max-w-md mx-auto flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <!-- 담백한 사각형 로고 아이콘 -->
+                <div class="w-10 h-10 rounded-xl bg-white/10 border border-white/20 flex items-center justify-center shrink-0">
+                    <svg class="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <rect x="4" y="3" width="16" height="18" rx="2" stroke="currentColor"/>
+                        <line x1="8" y1="7" x2="16" y2="7" stroke="currentColor"/>
+                        <circle cx="8.5" cy="11.5" r="1" fill="currentColor"/>
+                        <circle cx="12" cy="11.5" r="1" fill="currentColor"/>
+                        <circle cx="15.5" cy="11.5" r="1" fill="currentColor"/>
+                        <circle cx="8.5" cy="15" r="1" fill="currentColor"/>
+                        <circle cx="12" cy="15" r="1" fill="currentColor"/>
+                        <circle cx="15.5" cy="15" r="1" fill="currentColor"/>
+                        <circle cx="8.5" cy="18.5" r="1" fill="currentColor"/>
+                        <rect x="11" y="17.5" width="5.5" height="2" rx="1" fill="currentColor"/>
+                    </svg>
+                </div>
+                <div>
+                    <h1 class="text-base font-bold text-white leading-tight flex items-center gap-1.5">
+                        영현병 증식비
+                        <span class="text-[10px] bg-white/15 text-slate-100 font-medium px-1.5 py-0.5 rounded">AFMC</span>
+                    </h1>
+                    <p class="text-[11px] text-slate-200/80 font-normal">made by KJB</p>
+                </div>
+            </div>
+            
+            <div class="flex items-center space-x-1.5">
+                <button onclick="openHistoryModal()" class="p-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white transition-all flex items-center justify-center" title="집행 기록">
+                    <svg class="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                </button>
+                <button onclick="confirmResetList()" class="p-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white transition-all flex items-center justify-center" title="목록 초기화">
+                    <svg class="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="flex-1 overflow-y-auto max-w-md mx-auto w-full px-4 py-4 space-y-4 no-scrollbar pb-32">
+        
+        <!-- Budget Card -->
+        <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-200">
+            <div class="flex justify-between items-start mb-3">
+                <div>
+                    <span class="text-xs font-semibold text-slate-500 flex items-center gap-1">
+                        <svg class="w-4 h-4 text-afmc-red inline" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg> 배정 예산
+                    </span>
+                    <div class="flex items-center space-x-2 mt-1">
+                        <span class="text-2xl font-bold text-slate-900" id="display-budget">₩0</span>
+                        <button onclick="openBudgetModal()" class="text-xs bg-slate-100 hover:bg-slate-200 border border-slate-200 px-2.5 py-1 rounded-lg text-slate-700 font-medium flex items-center gap-1 active:scale-95 transition">
+                            <svg class="w-3.5 h-3.5 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg> 변경
+                        </button>
+                    </div>
+                </div>
+                <div class="text-right">
+                    <span class="text-xs font-semibold text-slate-500">남은 예산</span>
+                    <div class="text-2xl font-bold mt-1 text-emerald-600" id="display-remaining">₩0</div>
+                </div>
+            </div>
+
+            <!-- Progress Bar -->
+            <div class="mt-3">
+                <div class="flex justify-between text-xs text-slate-500 mb-1.5">
+                    <span>현재 사용액: <strong id="display-total-spent" class="text-slate-800">₩0</strong></span>
+                    <span id="budget-percentage" class="font-semibold text-afmc-red">0% 사용</span>
+                </div>
+                <div class="w-full h-3 bg-slate-100 rounded-full overflow-hidden border border-slate-200">
+                    <div id="budget-progress-bar" class="h-full bg-afmc-red rounded-full transition-all duration-300 w-0"></div>
+                </div>
+            </div>
+
+            <!-- Warning Banner -->
+            <div id="budget-warning-banner" class="hidden mt-3 p-2.5 rounded-xl bg-rose-50 border border-rose-200 flex items-center space-x-2 text-rose-700 text-xs font-medium">
+                <svg class="w-4 h-4 text-rose-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                <span>예산을 초과했습니다.</span>
+            </div>
+        </div>
+
+        <!-- Filter Bar -->
+        <div class="flex items-center space-x-1.5 overflow-x-auto no-scrollbar py-1 text-xs" id="category-filter-container">
+            <button onclick="setCategoryFilter('ALL')" class="category-chip active bg-afmc-red text-white font-semibold px-3 py-1.5 rounded-xl transition-all shrink-0">전체 (<span id="count-all">0</span>)</button>
+            <button onclick="setCategoryFilter('라면')" class="category-chip bg-white text-slate-600 border border-slate-200 px-3 py-1.5 rounded-xl font-medium transition-all shrink-0">🍜 라면</button>
+            <button onclick="setCategoryFilter('즉석밥')" class="category-chip bg-white text-slate-600 border border-slate-200 px-3 py-1.5 rounded-xl font-medium transition-all shrink-0">🍚 즉석밥</button>
+            <button onclick="setCategoryFilter('냉동식품')" class="category-chip bg-white text-slate-600 border border-slate-200 px-3 py-1.5 rounded-xl font-medium transition-all shrink-0">🧊 냉동식품</button>
+            <button onclick="setCategoryFilter('음료수')" class="category-chip bg-white text-slate-600 border border-slate-200 px-3 py-1.5 rounded-xl font-medium transition-all shrink-0">🥤 음료수</button>
+            <button onclick="setCategoryFilter('통조림')" class="category-chip bg-white text-slate-600 border border-slate-200 px-3 py-1.5 rounded-xl font-medium transition-all shrink-0">🥫 통조림</button>
+            <button onclick="setCategoryFilter('기타')" class="category-chip bg-white text-slate-600 border border-slate-200 px-3 py-1.5 rounded-xl font-medium transition-all shrink-0">📦 기타</button>
+        </div>
+
+        <!-- Items Container -->
+        <div id="items-container" class="space-y-2.5"></div>
+
+        <!-- Empty State -->
+        <div id="empty-state" class="text-center py-10 px-4 bg-white rounded-2xl border border-dashed border-slate-300">
+            <div class="w-12 h-12 bg-slate-100 text-slate-500 rounded-xl border border-slate-200 flex items-center justify-center mx-auto mb-2">
+                <svg class="w-6 h-6 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+            </div>
+            <h3 class="text-xs font-semibold text-slate-700">등록된 물품이 없습니다</h3>
+            <p class="text-[11px] text-slate-400 mt-0.5">하단 버튼을 눌러 추가하세요.</p>
+        </div>
+
+    </main>
+
+    <!-- Bottom Action Bar -->
+    <div class="fixed bottom-0 left-0 right-0 z-30 bg-white/95 backdrop-blur-md border-t border-slate-200 px-4 py-3 pb-safe">
+        <div class="max-w-md mx-auto flex items-center space-x-2">
+            <button onclick="openAddItemModal()" class="flex-1 bg-afmc-red hover:bg-afmc-redDark active:scale-[0.98] text-white font-bold py-3.5 px-4 rounded-xl shadow-sm flex items-center justify-center space-x-2 transition">
+                <svg class="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M12 4v16m8-8H4"/></svg>
+                <span class="text-sm">물품 추가하기</span>
+            </button>
+            <button onclick="openExportModal()" class="bg-slate-100 text-slate-700 border border-slate-200 active:bg-slate-200 font-semibold p-3.5 rounded-xl flex items-center justify-center transition" title="정산 내역 다운로드">
+                <svg class="w-5 h-5 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                </svg>
+            </button>
+        </div>
+    </div>
+
+    <!-- ADD / EDIT ITEM MODAL -->
+    <div id="item-modal" class="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs hidden flex items-end sm:items-center justify-center p-0 sm:p-4">
+        <div class="bg-white w-full max-w-md rounded-t-2xl sm:rounded-2xl p-6 shadow-xl border-t sm:border border-slate-200">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-sm font-bold text-slate-900 flex items-center gap-2" id="modal-title">
+                    <span class="w-2 h-2 bg-afmc-red rounded-full"></span>
+                    물품 추가하기
+                </h2>
+                <button onclick="closeModal('item-modal')" class="p-1 rounded-lg text-slate-400 hover:text-slate-600">
+                    <svg class="w-5 h-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+            </div>
+
+            <form id="item-form" onsubmit="handleSaveItem(event)" class="space-y-3.5">
+                <input type="hidden" id="edit-item-id" value="">
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">물품명</label>
+                    <input type="text" id="input-name" placeholder="예: 신라면 5입" required
+                        class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-afmc-red text-sm font-medium text-slate-800">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">카테고리</label>
+                    <div class="grid grid-cols-3 gap-1.5">
+                        <button type="button" onclick="selectCategory('라면')" id="cat-btn-라면" class="cat-select-btn py-2 px-1.5 border border-slate-200 rounded-xl text-xs font-medium text-slate-700 bg-slate-50 flex items-center justify-center gap-1">🍜 라면</button>
+                        <button type="button" onclick="selectCategory('즉석밥')" id="cat-btn-즉석밥" class="cat-select-btn py-2 px-1.5 border border-slate-200 rounded-xl text-xs font-medium text-slate-700 bg-slate-50 flex items-center justify-center gap-1">🍚 즉석밥</button>
+                        <button type="button" onclick="selectCategory('냉동식품')" id="cat-btn-냉동식품" class="cat-select-btn py-2 px-1.5 border border-slate-200 rounded-xl text-xs font-medium text-slate-700 bg-slate-50 flex items-center justify-center gap-1">🧊 냉동식품</button>
+                        <button type="button" onclick="selectCategory('음료수')" id="cat-btn-음료수" class="cat-select-btn py-2 px-1.5 border border-slate-200 rounded-xl text-xs font-medium text-slate-700 bg-slate-50 flex items-center justify-center gap-1">🥤 음료수</button>
+                        <button type="button" onclick="selectCategory('통조림')" id="cat-btn-통조림" class="cat-select-btn py-2 px-1.5 border border-slate-200 rounded-xl text-xs font-medium text-slate-700 bg-slate-50 flex items-center justify-center gap-1">🥫 통조림</button>
+                        <button type="button" onclick="selectCategory('기타')" id="cat-btn-기타" class="cat-select-btn py-2 px-1.5 border border-slate-200 rounded-xl text-xs font-medium text-slate-700 bg-slate-50 flex items-center justify-center gap-1">📦 기타</button>
+                    </div>
+                    <input type="hidden" id="input-category" value="라면">
+                </div>
+
+                <div class="grid grid-cols-2 gap-2.5">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">단가 (원)</label>
+                        <input type="text" id="input-price" placeholder="0" inputmode="numeric" oninput="formatPriceInput(this)" required
+                            class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-afmc-red text-sm font-bold text-slate-900">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">수량</label>
+                        <div class="flex items-center border border-slate-300 rounded-xl bg-slate-50 overflow-hidden">
+                            <button type="button" onclick="adjustFormQty(-1)" class="px-3 py-2.5 text-slate-600 hover:bg-slate-200 font-bold">-</button>
+                            <input type="number" id="input-qty" value="1" min="1" required
+                                class="w-full text-center bg-transparent focus:outline-none text-sm font-bold text-slate-800">
+                            <button type="button" onclick="adjustFormQty(1)" class="px-3 py-2.5 text-slate-600 hover:bg-slate-200 font-bold">+</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">유통기한 <span class="text-slate-400 font-normal">(선택)</span></label>
+                    <div class="flex items-center space-x-2">
+                        <input type="number" id="input-expiry-num" placeholder="예: 6" min="1" inputmode="numeric"
+                            class="flex-1 px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-afmc-red text-sm font-medium text-slate-800">
+                        <select id="input-expiry-unit"
+                            class="w-24 px-3 py-2.5 bg-slate-50 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-afmc-red text-sm font-medium text-slate-800">
+                            <option value="개월">개월</option>
+                            <option value="일">일</option>
+                            <option value="년">년</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="pt-2">
+                    <button type="submit" class="w-full bg-afmc-red hover:bg-afmc-redDark text-white font-bold py-3 rounded-xl shadow-sm transition">
+                        저장하기
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- SET BUDGET MODAL -->
+    <div id="budget-modal" class="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs hidden flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-sm rounded-2xl p-6 shadow-xl border border-slate-200">
+            <div class="flex justify-between items-center mb-2">
+                <h2 class="text-sm font-bold text-slate-900 flex items-center gap-2">
+                    <svg class="w-4 h-4 text-afmc-red" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    예산 설정
+                </h2>
+                <button onclick="closeModal('budget-modal')" class="p-1 rounded-lg text-slate-400 hover:text-slate-600">
+                    <svg class="w-5 h-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+            </div>
+            
+            <p class="text-xs text-slate-500 mb-3">증식비 예산 금액을 입력하세요.</p>
+            
+            <div class="space-y-3">
+                <div class="relative">
+                    <span class="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 font-semibold text-sm">₩</span>
+                    <input type="number" id="input-budget" placeholder="150000" step="1000"
+                        class="w-full pl-8 pr-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-afmc-red text-base font-bold text-slate-900">
+                </div>
+
+                <div class="grid grid-cols-3 gap-1.5">
+                    <button onclick="setBudgetPreset(150000)" class="py-1.5 bg-slate-100 hover:bg-slate-200 border border-slate-200 rounded-lg text-xs font-medium text-slate-700">15만원</button>
+                    <button onclick="setBudgetPreset(200000)" class="py-1.5 bg-slate-100 hover:bg-slate-200 border border-slate-200 rounded-lg text-xs font-medium text-slate-700">20만원</button>
+                    <button onclick="setBudgetPreset(300000)" class="py-1.5 bg-slate-100 hover:bg-slate-200 border border-slate-200 rounded-lg text-xs font-medium text-slate-700">30만원</button>
+                    <button onclick="setBudgetPreset(400000)" class="py-1.5 bg-slate-100 hover:bg-slate-200 border border-slate-200 rounded-lg text-xs font-medium text-slate-700">40만원</button>
+                    <button onclick="setBudgetPreset(500000)" class="py-1.5 bg-slate-100 hover:bg-slate-200 border border-slate-200 rounded-lg text-xs font-medium text-slate-700">50만원</button>
+                </div>
+
+                <button onclick="saveBudget()" class="w-full bg-afmc-red hover:bg-afmc-redDark text-white font-bold py-3 rounded-xl shadow-sm transition">
+                    예산 저장
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- HISTORY MODAL -->
+    <div id="history-modal" class="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs hidden flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-md rounded-2xl p-6 shadow-xl max-h-[80vh] flex flex-col border border-slate-200">
+            <div class="flex justify-between items-center mb-3">
+                <h2 class="text-sm font-bold text-slate-900">이전 집행 히스토리</h2>
+                <button onclick="closeModal('history-modal')" class="p-1 rounded-lg text-slate-400 hover:text-slate-600">
+                    <svg class="w-5 h-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+            </div>
+
+            <div id="history-list" class="flex-1 overflow-y-auto space-y-2.5 no-scrollbar py-1"></div>
+        </div>
+    </div>
+
+    <!-- EXPORT MODAL -->
+    <div id="export-modal" class="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs hidden flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-sm rounded-2xl p-6 shadow-xl border border-slate-200">
+            <div class="flex justify-between items-center mb-3">
+                <h2 class="text-sm font-bold text-slate-900 flex items-center gap-2">
+                    <svg class="w-4 h-4 text-afmc-red" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                    </svg>
+                    정산 내역 다운로드
+                </h2>
+                <button onclick="closeModal('export-modal')" class="p-1 rounded-lg text-slate-400 hover:text-slate-600">
+                    <svg class="w-5 h-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+            </div>
+            
+            <p class="text-xs text-slate-500 mb-4">현재 작성된 영현병 증식비 물품 및 정산 내역을 파일로 다운로드합니다.</p>
+            
+            <div class="space-y-2.5">
+                <button onclick="exportToExcel()" class="w-full bg-emerald-700 hover:bg-emerald-800 active:scale-[0.98] text-white font-bold py-3 px-4 rounded-xl shadow-sm flex items-center justify-center gap-2 transition text-sm">
+                    <svg class="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path d="M12 10v6m0 0l-3-3m3 3l3-3M3 17V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z"/>
+                    </svg>
+                    엑셀 파일 (.csv) 다운로드
+                </button>
+
+                <button onclick="exportToPDF()" class="w-full bg-slate-800 hover:bg-slate-900 active:scale-[0.98] text-white font-bold py-3 px-4 rounded-xl shadow-sm flex items-center justify-center gap-2 transition text-sm">
+                    <svg class="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                    </svg>
+                    PDF 보고서 (.pdf) 다운로드
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="fixed top-5 left-1/2 -translate-x-1/2 z-50 bg-slate-900 text-white text-xs font-medium px-4 py-2 rounded-full shadow-lg pointer-events-none transition-all opacity-0 -translate-y-2">
+        메시지 내용
+    </div>
+
+    <script>
+        let budget = parseInt(localStorage.getItem('afmc_budget')) || 150000;
+        let shoppingList = JSON.parse(localStorage.getItem('afmc_shoppingList')) || [];
+        let history = JSON.parse(localStorage.getItem('afmc_history')) || [];
+        let activeCategory = 'ALL';
+
+        document.addEventListener('DOMContentLoaded', () => {
+            selectCategory('라면');
+            renderApp();
+        });
+
+        function formatPriceInput(input) {
+            let val = input.value.replace(/[^0-9]/g, '');
+            if (val) {
+                input.value = parseInt(val, 10).toLocaleString('ko-KR');
+            } else {
+                input.value = '';
+            }
+        }
+
+        function saveData() {
+            localStorage.setItem('afmc_budget', budget);
+            localStorage.setItem('afmc_shoppingList', JSON.stringify(shoppingList));
+            localStorage.setItem('afmc_history', JSON.stringify(history));
+        }
+
+        function formatKRW(amount) {
+            return '₩' + (amount || 0).toLocaleString('ko-KR');
+        }
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return str.replace(/[&<>"']/g, match => {
+                const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
+                return map[match];
+            });
+        }
+
+        function calculateItemTotal(item) {
+            return (item.price || 0) * (item.qty || 1);
+        }
+
+        function calculateGrandTotal() {
+            return shoppingList.reduce((sum, item) => sum + calculateItemTotal(item), 0);
+        }
+
+        function renderApp() {
+            const totalSpent = calculateGrandTotal();
+            const remaining = budget - totalSpent;
+            const progressPercent = budget > 0 ? Math.min(Math.round((totalSpent / budget) * 100), 100) : 0;
+
+            document.getElementById('display-budget').innerText = formatKRW(budget);
+            document.getElementById('display-total-spent').innerText = formatKRW(totalSpent);
+
+            const remainingElem = document.getElementById('display-remaining');
+            remainingElem.innerText = formatKRW(remaining);
+            
+            if (remaining < 0) {
+                remainingElem.className = "text-2xl font-bold mt-1 text-rose-600";
+                document.getElementById('budget-warning-banner').classList.remove('hidden');
+            } else {
+                remainingElem.className = "text-2xl font-bold mt-1 text-emerald-600";
+                document.getElementById('budget-warning-banner').classList.add('hidden');
+            }
+
+            const progressBar = document.getElementById('budget-progress-bar');
+            document.getElementById('budget-percentage').innerText = `${progressPercent}% 사용`;
+            progressBar.style.width = `${progressPercent}%`;
+
+            if (remaining < 0) {
+                progressBar.className = "h-full bg-rose-600 rounded-full transition-all duration-300";
+            } else {
+                progressBar.className = "h-full bg-afmc-red rounded-full transition-all duration-300";
+            }
+
+            document.getElementById('count-all').innerText = shoppingList.length;
+
+            const container = document.getElementById('items-container');
+            const emptyState = document.getElementById('empty-state');
+
+            const filteredList = activeCategory === 'ALL' 
+                ? shoppingList 
+                : shoppingList.filter(item => item.category === activeCategory);
+
+            if (filteredList.length === 0) {
+                container.innerHTML = '';
+                emptyState.classList.remove('hidden');
+            } else {
+                emptyState.classList.add('hidden');
+                container.innerHTML = filteredList.map(item => {
+                    const itemTotal = calculateItemTotal(item);
+
+                    return `
+                        <div class="bg-white rounded-xl p-3.5 shadow-sm border border-slate-200 flex items-center justify-between">
+                            <div class="flex-1 pr-2">
+                                <div class="flex items-center space-x-1.5 mb-1">
+                                    <span class="text-[10px] font-semibold text-slate-600 bg-slate-100 border border-slate-200 px-1.5 py-0.5 rounded">
+                                        ${item.category || '기타'}
+                                    </span>
+                                    ${item.expiry ? `<span class="text-[10px] font-medium text-slate-500 bg-slate-50 px-1.5 py-0.5 rounded border border-slate-200">유통기한: ${item.expiry}</span>` : ''}
+                                </div>
+                                <h4 class="text-sm font-bold text-slate-800 leading-tight">${escapeHtml(item.name)}</h4>
+                                <div class="text-xs text-slate-500 mt-0.5">
+                                    단가 ${formatKRW(item.price)}
+                                </div>
+                            </div>
+
+                            <div class="flex items-center space-x-2.5">
+                                <div class="flex items-center bg-slate-100 border border-slate-200 rounded-lg p-0.5">
+                                    <button onclick="changeQty('${item.id}', -1)" class="w-6 h-6 flex items-center justify-center text-slate-700 font-bold text-xs hover:bg-slate-200 rounded active:bg-slate-300">-</button>
+                                    <span class="w-6 text-center font-bold text-xs text-slate-800">${item.qty}</span>
+                                    <button onclick="changeQty('${item.id}', 1)" class="w-6 h-6 flex items-center justify-center text-slate-700 font-bold text-xs hover:bg-slate-200 rounded active:bg-slate-300">+</button>
+                                </div>
+
+                                <div class="text-right min-w-[65px]">
+                                    <div class="text-xs font-bold text-slate-900">${formatKRW(itemTotal)}</div>
+                                    <button onclick="deleteItem('${item.id}')" class="text-[10px] text-slate-400 hover:text-rose-600 transition mt-0.5">삭제</button>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
+        }
+
+        function setCategoryFilter(cat) {
+            activeCategory = cat;
+            document.querySelectorAll('#category-filter-container .category-chip').forEach(btn => {
+                const text = btn.innerText;
+                if ((cat === 'ALL' && text.includes('전체')) || text.includes(cat)) {
+                    btn.className = "category-chip active bg-afmc-red text-white font-semibold px-3 py-1.5 rounded-xl transition-all shrink-0";
+                } else {
+                    btn.className = "category-chip bg-white text-slate-600 border border-slate-200 px-3 py-1.5 rounded-xl font-medium transition-all shrink-0";
+                }
+            });
+            renderApp();
+        }
+
+        function selectCategory(cat) {
+            document.getElementById('input-category').value = cat;
+            document.querySelectorAll('.cat-select-btn').forEach(btn => {
+                if (btn.id === `cat-btn-${cat}`) {
+                    btn.className = "cat-select-btn py-2 px-1.5 border-2 border-afmc-red rounded-xl text-xs font-bold text-afmc-red bg-rose-50 flex items-center justify-center gap-1";
+                } else {
+                    btn.className = "cat-select-btn py-2 px-1.5 border border-slate-200 rounded-xl text-xs font-medium text-slate-700 bg-slate-50 flex items-center justify-center gap-1";
+                }
+            });
+        }
+
+        function adjustFormQty(delta) {
+            const input = document.getElementById('input-qty');
+            let val = parseInt(input.value) || 1;
+            val = Math.max(1, val + delta);
+            input.value = val;
+        }
+
+        function changeQty(id, delta) {
+            const item = shoppingList.find(i => i.id === id);
+            if (item) {
+                item.qty = Math.max(1, item.qty + delta);
+                saveData();
+                renderApp();
+            }
+        }
+
+        function deleteItem(id) {
+            shoppingList = shoppingList.filter(i => i.id !== id);
+            saveData();
+            renderApp();
+            showToast('물품이 삭제되었습니다.');
+        }
+
+        function openAddItemModal() {
+            document.getElementById('modal-title').innerText = '물품 추가하기';
+            document.getElementById('edit-item-id').value = '';
+            document.getElementById('input-name').value = '';
+            document.getElementById('input-price').value = '';
+            document.getElementById('input-qty').value = '1';
+            document.getElementById('input-expiry-num').value = '';
+            document.getElementById('input-expiry-unit').value = '개월';
+            selectCategory('라면');
+            document.getElementById('item-modal').classList.remove('hidden');
+        }
+
+        function handleSaveItem(e) {
+            e.preventDefault();
+            const name = document.getElementById('input-name').value.trim();
+            const category = document.getElementById('input-category').value;
+            const priceRaw = document.getElementById('input-price').value.replace(/[^0-9]/g, '');
+            const price = parseInt(priceRaw, 10) || 0;
+            const qty = parseInt(document.getElementById('input-qty').value, 10) || 1;
+            const expiryNum = document.getElementById('input-expiry-num').value.trim();
+            const expiryUnit = document.getElementById('input-expiry-unit').value;
+            const expiry = expiryNum ? `${expiryNum}${expiryUnit}` : '';
+
+            if (!name) {
+                showToast('물품명을 입력해주세요.');
+                return;
+            }
+
+            shoppingList.unshift({
+                id: Date.now().toString(),
+                name,
+                category,
+                price,
+                qty,
+                expiry
+            });
+
+            saveData();
+            renderApp();
+            closeModal('item-modal');
+            showToast('물품이 추가되었습니다.');
+        }
+
+        function openBudgetModal() {
+            document.getElementById('input-budget').value = budget;
+            document.getElementById('budget-modal').classList.remove('hidden');
+        }
+
+        function setBudgetPreset(val) {
+            document.getElementById('input-budget').value = val;
+        }
+
+        function saveBudget() {
+            const val = parseInt(document.getElementById('input-budget').value) || 0;
+            budget = val;
+            saveData();
+            renderApp();
+            closeModal('budget-modal');
+            showToast('예산이 변경되었습니다.');
+        }
+
+        function confirmResetList() {
+            if (shoppingList.length === 0) {
+                showToast('초기화할 물품이 없습니다.');
+                return;
+            }
+            if (confirm('현재 작성된 구매 목록을 전부 삭제하시겠습니까?')) {
+                shoppingList = [];
+                saveData();
+                renderApp();
+                showToast('목록이 초기화되었습니다.');
+            }
+        }
+
+        function openHistoryModal() {
+            const container = document.getElementById('history-list');
+            if (history.length === 0) {
+                container.innerHTML = '<p class="text-xs text-slate-400 text-center py-6">저장된 집행 기록이 없습니다.</p>';
+            } else {
+                container.innerHTML = history.map(h => `
+                    <div class="p-3 bg-slate-50 rounded-xl border border-slate-200">
+                        <div class="flex justify-between items-center mb-1">
+                            <span class="text-xs font-bold text-slate-800">${h.date}</span>
+                            <span class="text-xs font-bold text-afmc-red">${formatKRW(h.totalSpent)}</span>
+                        </div>
+                        <div class="text-[11px] text-slate-500">
+                            예산 ${formatKRW(h.budget)}중 ${h.itemCount}개 품목 집행
+                        </div>
+                    </div>
+                `).join('');
+            }
+            document.getElementById('history-modal').classList.remove('hidden');
+        }
+
+        function openExportModal() {
+            if (shoppingList.length === 0) {
+                showToast('다운로드할 물품 내역이 없습니다.');
+                return;
+            }
+            document.getElementById('export-modal').classList.remove('hidden');
+        }
+
+        function exportToExcel() {
+            if (shoppingList.length === 0) {
+                showToast('다운로드할 물품 내역이 없습니다.');
+                return;
+            }
+
+            const today = new Date().toISOString().slice(0, 10);
+            const totalSpent = calculateGrandTotal();
+            const remaining = budget - totalSpent;
+
+            let csvContent = "\uFEFF";
+            csvContent += "영현병 증식비 집행 정산서\n";
+            csvContent += `작성일자,${new Date().toLocaleDateString('ko-KR')}\n`;
+            csvContent += `배정예산,${budget}원,집행총액,${totalSpent}원,남은잔액,${remaining}원\n\n`;
+            csvContent += "연번,카테고리,물품명,단가(원),수량,소계(원),유통기한\n";
+
+            shoppingList.forEach((item, index) => {
+                const itemTotal = calculateItemTotal(item);
+                const nameEscaped = `"${(item.name || '').replace(/"/g, '""')}"`;
+                const category = item.category || '기타';
+                const expiry = item.expiry || '-';
+                csvContent += `${index + 1},${category},${nameEscaped},${item.price},${item.qty},${itemTotal},${expiry}\n`;
+            });
+
+            const totalQty = shoppingList.reduce((sum, item) => sum + (item.qty || 1), 0);
+            csvContent += `\n합계,,${shoppingList.length}개 품목 (${totalQty}개),,${totalSpent}원,\n`;
+
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.setAttribute('href', url);
+            link.setAttribute('download', `영현병_증식비_정산내역_${today.replace(/-/g, '')}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+
+            closeModal('export-modal');
+            showToast('엑셀(CSV) 파일이 다운로드되었습니다.');
+        }
+
+        function exportToPDF() {
+            if (shoppingList.length === 0) {
+                showToast('다운로드할 물품 내역이 없습니다.');
+                return;
+            }
+
+            const today = new Date().toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' });
+            const todayFilename = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+            const totalSpent = calculateGrandTotal();
+            const remaining = budget - totalSpent;
+
+            const rowsHtml = shoppingList.map((item, idx) => `
+                <tr>
+                    <td style="border: 1px solid #cbd5e1; padding: 8px; text-align: center;">${idx + 1}</td>
+                    <td style="border: 1px solid #cbd5e1; padding: 8px; text-align: center;">${item.category || '기타'}</td>
+                    <td style="border: 1px solid #cbd5e1; padding: 8px; font-weight: 600;">${escapeHtml(item.name)}</td>
+                    <td style="border: 1px solid #cbd5e1; padding: 8px; text-align: right;">${item.price.toLocaleString('ko-KR')}원</td>
+                    <td style="border: 1px solid #cbd5e1; padding: 8px; text-align: center;">${item.qty}</td>
+                    <td style="border: 1px solid #cbd5e1; padding: 8px; text-align: right; font-weight: bold;">${calculateItemTotal(item).toLocaleString('ko-KR')}원</td>
+                    <td style="border: 1px solid #cbd5e1; padding: 8px; text-align: center;">${item.expiry || '-'}</td>
+                </tr>
+            `).join('');
+
+            // PDF 변환용 임시 컨테이너 생성
+            const element = document.createElement('div');
+            element.style.padding = '16px';
+            element.style.backgroundColor = '#ffffff';
+            element.style.color = '#0f172a';
+            element.style.fontFamily = "'Noto Sans KR', sans-serif";
+
+            element.innerHTML = `
+                <div style="font-family: 'Noto Sans KR', sans-serif; padding: 10px;">
+                    <h1 style="text-align: center; color: #7C1D24; margin-bottom: 4px; font-size: 20px; font-weight: 700;">영현병 증식비 집행 정산서</h1>
+                    <div style="text-align: center; color: #64748b; font-size: 12px; margin-bottom: 16px;">국군의무사령부 (AFMC) | 작성일: ${today}</div>
+                    
+                    <div style="display: flex; justify-content: space-between; background: #f8fafc; border: 1px solid #e2e8f0; padding: 10px 16px; border-radius: 8px; margin-bottom: 16px; font-size: 12px;">
+                        <div><strong>배정 예산:</strong> ${budget.toLocaleString('ko-KR')}원</div>
+                        <div><strong>현재 집행액:</strong> ${totalSpent.toLocaleString('ko-KR')}원</div>
+                        <div><strong>남은 잔액:</strong> ${remaining.toLocaleString('ko-KR')}원</div>
+                    </div>
+
+                    <table style="width: 100%; border-collapse: collapse; font-size: 11px;">
+                        <thead>
+                            <tr>
+                                <th style="background-color: #7C1D24; color: #ffffff; border: 1px solid #501116; padding: 6px;" width="6%">NO</th>
+                                <th style="background-color: #7C1D24; color: #ffffff; border: 1px solid #501116; padding: 6px;" width="14%">카테고리</th>
+                                <th style="background-color: #7C1D24; color: #ffffff; border: 1px solid #501116; padding: 6px;">물품명</th>
+                                <th style="background-color: #7C1D24; color: #ffffff; border: 1px solid #501116; padding: 6px;" width="15%">단가</th>
+                                <th style="background-color: #7C1D24; color: #ffffff; border: 1px solid #501116; padding: 6px;" width="8%">수량</th>
+                                <th style="background-color: #7C1D24; color: #ffffff; border: 1px solid #501116; padding: 6px;" width="16%">소계</th>
+                                <th style="background-color: #7C1D24; color: #ffffff; border: 1px solid #501116; padding: 6px;" width="15%">유통기한</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${rowsHtml}
+                        </tbody>
+                    </table>
+                    <div style="margin-top: 24px; text-align: right; font-size: 10px; color: #94a3b8;">made by KJB</div>
+                </div>
+            `;
+
+            const opt = {
+                margin:       10,
+                filename:     `영현병_증식비_정산서_${todayFilename}.pdf`,
+                image:        { type: 'jpeg', quality: 0.98 },
+                html2canvas:  { scale: 2, useCORS: true },
+                jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+            };
+
+            showToast('PDF 파일 생성 및 다운로드 중...');
+            
+            html2pdf().set(opt).from(element).save().then(() => {
+                closeModal('export-modal');
+                showToast('PDF 파일이 다운로드되었습니다.');
+            }).catch(err => {
+                console.error(err);
+                showToast('PDF 다운로드 중 오류가 발생했습니다.');
+            });
+        }
+
+        function closeModal(id) {
+            document.getElementById(id).classList.add('hidden');
+        }
+
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            toast.innerText = msg;
+            toast.classList.remove('opacity-0', '-translate-y-2');
+            toast.classList.add('opacity-100', 'translate-y-0');
+
+            setTimeout(() => {
+                toast.classList.remove('opacity-100', 'translate-y-0');
+                toast.classList.add('opacity-0', '-translate-y-2');
+            }, 2000);
+        }
+    </script>
+</body>
+</html>
